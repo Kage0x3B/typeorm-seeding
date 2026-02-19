@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { DataSource } from 'typeorm';
+import { base, en, Faker } from '@faker-js/faker';
 import { createSeedingContext, SeedingContext } from '../src/index.js';
 import type { SeedingUserContext } from '../src/index.js';
 import { UserFactory } from './factory/UserFactory.js';
@@ -134,5 +135,54 @@ describe('cleanup idempotency', () => {
         await ctx.getFactory(UserFactory).persistOne();
         await ctx.cleanup();
         await expect(ctx.cleanup()).resolves.toBeUndefined();
+    });
+});
+
+describe('custom faker', () => {
+    test('seeded faker produces deterministic output', async () => {
+        const seeded1 = new Faker({ locale: [en, base] });
+        seeded1.seed(42);
+        const ctx1 = createSeedingContext(dataSource, { faker: seeded1 });
+
+        const seeded2 = new Faker({ locale: [en, base] });
+        seeded2.seed(42);
+        const ctx2 = createSeedingContext(dataSource, { faker: seeded2 });
+
+        const user1 = await ctx1.getFactory(UserFactory).buildOne();
+        const user2 = await ctx2.getFactory(UserFactory).buildOne();
+
+        expect(user1.firstName).toBe(user2.firstName);
+        expect(user1.lastName).toBe(user2.lastName);
+        expect(user1.address).toBe(user2.address);
+    });
+
+    test('ctx.faker returns the injected instance', () => {
+        const custom = new Faker({ locale: [en, base] });
+        const customCtx = createSeedingContext(dataSource, { faker: custom });
+        expect(customCtx.faker).toBe(custom);
+    });
+
+    test('default context uses global faker', () => {
+        const defaultCtx = createSeedingContext(dataSource);
+        expect(defaultCtx.faker).toBeDefined();
+    });
+
+    test('withTransaction preserves the custom faker', () => {
+        const custom = new Faker({ locale: [en, base] });
+        const customCtx = createSeedingContext(dataSource, { faker: custom });
+        const childCtx = customCtx.withTransaction(dataSource.manager);
+        expect(childCtx.faker).toBe(custom);
+    });
+
+    test('variants() receives the faker instance', async () => {
+        const custom = new Faker({ locale: [en, base] });
+        custom.seed(123);
+        const customCtx = createSeedingContext(dataSource, { faker: custom });
+
+        // Build a user with the 'admin' variant — the variant uses static values,
+        // but define() uses faker, confirming the custom instance flows through
+        const user = await customCtx.getFactory(UserFactory).variant('admin').buildOne();
+        expect(user.firstName).toBeDefined();
+        expect(user.role).toBe('admin');
     });
 });

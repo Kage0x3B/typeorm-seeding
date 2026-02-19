@@ -13,7 +13,7 @@ export class ProfileFactory extends Factory<ProfileEntity, 'short'> {
         };
     }
 
-    variants() {
+    variants(faker: Faker) {
         return {
             short: {
                 bio: 'Short bio'

@@ -37,9 +37,9 @@ Abstract method. Returns an object containing scalar values and/or descriptors t
 
 `FactorySchema<T>` maps each property of `T` to either its original type **or** a `Descriptor`. This is what allows you to return `belongsTo(...)`, `sequence(...)`, etc. alongside plain values.
 
-#### `variants(): Record<V, Partial<FactorySchema<T>>>`
+#### `variants(faker: Faker): Record<V, Partial<FactorySchema<T>>>`
 
-Optional override. Returns a map of named variations that layer on top of the base `define()` output. When `V` is narrowed (e.g. `'admin' | 'inactive' | 'withPets'`), only those keys are allowed.
+Optional override. Returns a map of named variations that layer on top of the base `define()` output. The `faker` instance is passed as an argument, allowing variants to generate dynamic fake data. When `V` is narrowed (e.g. `'admin' | 'inactive' | 'withPets'`), only those keys are allowed.
 
 ```typescript
 import { Factory, hasMany, type Faker, type FactorySchema } from '@kage0x3b/typeorm-seeding';
@@ -58,11 +58,11 @@ export class UserFactory extends Factory<UserEntity, 'admin' | 'inactive' | 'wit
         };
     }
 
-    variants() {
+    variants(faker: Faker) {
         return {
             admin: {
                 role: 'admin',
-                email: 'admin@example.com',
+                email: faker.internet.email({ provider: 'admin.example.com' }),
             },
             inactive: {
                 isActive: false,
@@ -447,7 +447,7 @@ beforeEach(() => {
 
 The `SeedingContext` manages factory instances, sequence counters, and the database connection.
 
-### `createSeedingContext(dataSource)`
+### `createSeedingContext(dataSource, options?)`
 
 Creates a new seeding context. This is the entry point for using the library.
 
@@ -457,11 +457,24 @@ import { createSeedingContext } from '@kage0x3b/typeorm-seeding';
 const ctx = createSeedingContext(dataSource);
 ```
 
+To use a custom Faker instance (e.g. seeded for deterministic output or with a specific locale):
+
+```typescript
+import { Faker } from '@kage0x3b/typeorm-seeding';
+import { base, en } from '@faker-js/faker';
+
+const seededFaker = new Faker({ locale: [en, base] });
+seededFaker.seed(42);
+
+const ctx = createSeedingContext(dataSource, { faker: seededFaker });
+```
+
 **Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `dataSource` | `DataSource` | TypeORM 0.3+ DataSource instance |
+| `options.faker` | `Faker` | Optional custom Faker.js instance. Defaults to the global `faker`. |
 
 ### `ctx.getFactory<F>(FactoryClass): F`
 
@@ -470,6 +483,14 @@ Returns the cached factory instance for the given class, typed as the concrete f
 ```typescript
 const userFactory = ctx.getFactory(UserFactory);
 const petFactory = ctx.getFactory(PetFactory);
+```
+
+### `ctx.faker`
+
+The Faker.js instance used by this context. This is the same instance passed to `define(faker)` and `variants(faker)`. If a custom faker was provided via `createSeedingContext(ds, { faker })`, this returns that instance; otherwise it returns the default global faker.
+
+```typescript
+const name = ctx.faker.person.firstName();
 ```
 
 ### `ctx.resetSequences()`

@@ -128,10 +128,10 @@ const rawSchema = factory.define(faker);
 
 #### Phase 2: Merge Variants
 
-If the factory has active variants (set via `.variant()`), look up each variant name in `factory.variants()`. If any name is missing, throw an error. Merge each variant's partial schema on top of the base schema in order.
+If the factory has active variants (set via `.variant()`), look up each variant name in `factory.variants(faker)`. If any name is missing, throw an error. Merge each variant's partial schema on top of the base schema in order.
 
 ```typescript
-const variantData = factory.variants()['admin'];
+const variantData = factory.variants(faker)['admin'];
 if (!variantData) throw new Error(`Unknown variant "admin" on ${factory.constructor.name}`);
 const schema = { ...rawSchema, ...variantData };
 ```
@@ -377,7 +377,7 @@ variant(...names: V[]): this {
 
 The return type is `this` (not `Factory<T>`), so chained calls preserve the concrete factory type. `names` is typed as `V[]` — when `V` is narrowed (e.g. `'admin' | 'withPets'`), only valid variant names are accepted.
 
-The clone shares the same context reference, so sequence counters remain consistent. The `_activeVariants` array is read by the resolver during Phase 2 to merge variant data. If any name in `_activeVariants` is not present as a key in the factory's `variants()` return value, the resolver throws an error at resolution time (fail fast on typos).
+The clone shares the same context reference, so sequence counters remain consistent. The `_activeVariants` array is read by the resolver during Phase 2 to merge variant data. If any name in `_activeVariants` is not present as a key in the factory's `variants(faker)` return value, the resolver throws an error at resolution time (fail fast on typos).
 
 ### Context Injection
 

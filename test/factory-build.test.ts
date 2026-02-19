@@ -97,7 +97,7 @@ describe('Factory variants', () => {
 
     test('default variants() returns empty object', () => {
         const factory = ctx.getFactory(NoVariantUserFactory);
-        expect(factory.variants()).toEqual({});
+        expect(factory.variants(ctx.faker)).toEqual({});
     });
 
     test('throws with "(none)" when factory has no variants defined', async () => {

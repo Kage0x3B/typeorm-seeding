@@ -27,7 +27,7 @@ export class SchemaResolver<T> {
         let schema: Record<string, any> = { ...rawSchema };
         const activeVariants = this._factory._internalActiveVariants;
         if (activeVariants.length > 0) {
-            const variantMap = this._factory.variants();
+            const variantMap = this._factory.variants(this._faker);
             for (const name of activeVariants) {
                 const variantData = variantMap[name];
                 if (!variantData) {

@@ -1,4 +1,4 @@
-import { faker, type Faker } from '@faker-js/faker';
+import type { Faker } from '@faker-js/faker';
 import type { Constructable } from './types/Constructable.js';
 import type { FactoryOverrides } from './types/FactoryOverrides.js';
 import type { FactorySchema } from './types/FactorySchema.js';
@@ -38,7 +38,7 @@ export type AugmentedPromise<T> = Promise<T> & {
  *         };
  *     }
  *
- *     variants() {
+ *     variants(faker: Faker) {
  *         return {
  *             admin: { role: 'admin' },
  *         };
@@ -82,9 +82,11 @@ export abstract class Factory<T, V extends string = string> {
 
     /**
      * Override to provide named variants that merge additional property values on top of {@link define}.
+     *
+     * @param faker - The Faker.js instance for generating fake data.
      * @returns A record mapping variant names to partial schema overrides.
      */
-    public variants(): Record<V, Partial<FactorySchema<T>>> {
+    public variants(faker: Faker): Record<V, Partial<FactorySchema<T>>> {
         return {} as Record<V, Partial<FactorySchema<T>>>;
     }
 
@@ -145,7 +147,7 @@ export abstract class Factory<T, V extends string = string> {
     }
 
     private _resolveOne(overrides: FactoryOverrides<T> | undefined, persist: boolean): AugmentedPromise<T> {
-        const resolver = new SchemaResolver<T>(this, this._ctx, faker, persist);
+        const resolver = new SchemaResolver<T>(this, this._ctx, this._ctx.faker, persist);
         const promise = resolver.resolve(overrides);
 
         const augmented = promise as AugmentedPromise<T>;

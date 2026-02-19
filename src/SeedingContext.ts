@@ -1,3 +1,4 @@
+import { faker as defaultFaker, type Faker } from '@faker-js/faker';
 import type { DataSource, EntityManager } from 'typeorm';
 import type { Factory } from './Factory.js';
 import type { Seeder } from './Seeder.js';
@@ -16,6 +17,7 @@ export class SeedingContext {
     private readonly _creationLog: Array<{ model: Constructable<any>; entity: any }>;
     private readonly _dataSource: DataSource;
     private readonly _entityManager: EntityManager;
+    private readonly _faker: Faker;
 
     /**
      * User-extensible storage object. Add custom properties via module augmentation
@@ -32,6 +34,7 @@ export class SeedingContext {
             creationLog?: Array<{ model: Constructable<any>; entity: any }>;
             store?: SeedingUserContext;
             entityManager?: EntityManager;
+            faker?: Faker;
         }
     ) {
         this._dataSource = dataSource;
@@ -42,6 +45,7 @@ export class SeedingContext {
         this._creationLog = options?.creationLog ?? [];
         this.store = (options?.store ?? {}) as SeedingUserContext;
         this._entityManager = options?.entityManager ?? dataSource.manager;
+        this._faker = options?.faker ?? defaultFaker;
     }
 
     /**
@@ -145,6 +149,11 @@ export class SeedingContext {
         return this._entityManager;
     }
 
+    /** Get the Faker.js instance used by this context. */
+    public get faker(): Faker {
+        return this._faker;
+    }
+
     /** Get the underlying TypeORM DataSource. */
     public getDataSource(): DataSource {
         return this._dataSource;
@@ -188,7 +197,8 @@ export class SeedingContext {
             refStore: this._refStore,
             creationLog: this._creationLog,
             store: this.store,
-            entityManager: em
+            entityManager: em,
+            faker: this._faker
         });
     }
 
@@ -210,8 +220,10 @@ export class SeedingContext {
  * Create a new {@link SeedingContext} from a TypeORM DataSource.
  *
  * @param dataSource - An initialized TypeORM DataSource.
+ * @param options - Optional configuration.
+ * @param options.faker - A custom Faker.js instance (e.g. seeded or locale-specific). Defaults to the global faker.
  * @returns A fresh seeding context ready for use.
  */
-export function createSeedingContext(dataSource: DataSource): SeedingContext {
-    return new SeedingContext(dataSource);
+export function createSeedingContext(dataSource: DataSource, options?: { faker?: Faker }): SeedingContext {
+    return new SeedingContext(dataSource, options);
 }

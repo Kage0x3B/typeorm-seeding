@@ -118,7 +118,7 @@ company: ref('acmeCorp')
 
 ## Variants
 
-Override `variants()` to define named variations layered on top of `define()`.
+Override `variants(faker)` to define named variations layered on top of `define()`. The `faker` instance is passed as an argument, allowing variants to generate dynamic fake data.
 
 ```typescript
 export class UserFactory extends Factory<UserEntity> {
@@ -133,7 +133,7 @@ export class UserFactory extends Factory<UserEntity> {
         };
     }
 
-    variants() {
+    variants(faker: Faker) {
         return {
             admin: {
                 role: 'admin',
@@ -233,6 +233,8 @@ beforeAll(async () => {
 
 beforeEach(() => {
     ctx = createSeedingContext(dataSource);
+    // Or with a custom faker instance for deterministic output:
+    // ctx = createSeedingContext(dataSource, { faker: seededFaker });
 });
 
 afterEach(async () => {

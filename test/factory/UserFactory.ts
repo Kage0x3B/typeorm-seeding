@@ -16,7 +16,7 @@ export class UserFactory extends Factory<UserEntity, 'admin' | 'withPets' | 'wit
         };
     }
 
-    variants() {
+    variants(faker: Faker) {
         return {
             admin: {
                 role: UserRole.ADMIN,

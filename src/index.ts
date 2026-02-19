@@ -20,4 +20,4 @@ export type {
     SeedingUserContext,
     VariantName
 } from './types/index.js';
-export type { Faker } from '@faker-js/faker';
+export { Faker } from '@faker-js/faker';

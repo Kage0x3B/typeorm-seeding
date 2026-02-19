@@ -14,7 +14,7 @@ export class PetFactory extends Factory<PetEntity, 'dog' | 'withAdminOwner'> {
         };
     }
 
-    variants() {
+    variants(faker: Faker) {
         return {
             dog: {
                 type: AnimalType.DOG,
