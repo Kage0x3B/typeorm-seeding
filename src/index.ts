@@ -17,6 +17,7 @@ export type {
     EntityOf,
     FactoryOverrides,
     FactorySchema,
+    RefLabel,
     SeedingUserContext,
     VariantName
 } from './types/index.js';

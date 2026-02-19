@@ -1,5 +1,6 @@
 import type { Constructable } from '../types/Constructable.js';
 import type { FactoryOverrides } from '../types/FactoryOverrides.js';
+import type { RefLabel } from '../types/SeedingUserContext.js';
 import type { Factory } from '../Factory.js';
 
 /** Symbol used to tag descriptor objects for runtime identification. */
@@ -60,7 +61,7 @@ export interface SequenceDescriptor<R = any> extends BaseDescriptor {
  */
 export interface RefDescriptor<V = any> extends BaseDescriptor {
     kind: 'ref';
-    label: string;
+    label: RefLabel;
     /** @internal Type-level only — not set at runtime. */
     readonly __resolvedType?: V;
 }

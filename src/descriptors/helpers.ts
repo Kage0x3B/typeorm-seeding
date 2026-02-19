@@ -1,5 +1,6 @@
 import type { Constructable } from '../types/Constructable.js';
 import type { FactoryOverrides } from '../types/FactoryOverrides.js';
+import type { RefLabel } from '../types/SeedingUserContext.js';
 import type { Factory } from '../Factory.js';
 import type { EntityOf, VariantName } from '../types/FactoryUtilTypes.js';
 import {
@@ -152,7 +153,7 @@ export function sequence<R>(callback: (n: number) => R): SequenceDescriptor<R> {
  * }
  * ```
  */
-export function ref<V = any>(label: string): RefDescriptor<V> {
+export function ref<V = any>(label: RefLabel): RefDescriptor<V> {
     return {
         [DESCRIPTOR_TAG]: true,
         kind: 'ref',

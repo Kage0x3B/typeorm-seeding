@@ -3,7 +3,7 @@ import type { DataSource, EntityManager } from 'typeorm';
 import type { Factory } from './Factory.js';
 import type { Seeder } from './Seeder.js';
 import type { Constructable } from './types/Constructable.js';
-import type { SeedingUserContext } from './types/SeedingUserContext.js';
+import type { RefLabel, SeedingUserContext } from './types/SeedingUserContext.js';
 
 /**
  * Central context that manages factory instances, sequence counters, labeled refs,
@@ -97,7 +97,7 @@ export class SeedingContext {
      * @param entity - The entity to store.
      * @throws If the label is already registered.
      */
-    public setRef(label: string, entity: unknown): void {
+    public setRef(label: RefLabel, entity: unknown): void {
         if (this._refStore.has(label)) {
             throw new Error(`Ref label "${label}" is already registered. Use ctx.clearRefs() to reset labels.`);
         }
@@ -112,7 +112,7 @@ export class SeedingContext {
      * @returns The stored entity, cast to `T`.
      * @throws If the label has not been registered.
      */
-    public ref<T = unknown>(label: string): T {
+    public ref<T = unknown>(label: RefLabel): T {
         if (!this._refStore.has(label)) {
             throw new Error(
                 `Ref label "${label}" is not registered. Make sure to call .as("${label}") before referencing it.`

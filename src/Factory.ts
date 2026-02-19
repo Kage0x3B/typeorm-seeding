@@ -2,6 +2,7 @@ import type { Faker } from '@faker-js/faker';
 import type { Constructable } from './types/Constructable.js';
 import type { FactoryOverrides } from './types/FactoryOverrides.js';
 import type { FactorySchema } from './types/FactorySchema.js';
+import type { RefLabel } from './types/SeedingUserContext.js';
 import type { SeedingContext } from './SeedingContext.js';
 import { SchemaResolver } from './resolver/SchemaResolver.js';
 
@@ -16,7 +17,7 @@ export type AugmentedPromise<T> = Promise<T> & {
      * Label the resolved entity so it can be retrieved later with {@link SeedingContext.ref} or the {@link ref} descriptor.
      * @param label - A unique string identifier for this entity.
      */
-    as(label: string): Promise<T>;
+    as(label: RefLabel): Promise<T>;
 };
 
 /**
@@ -151,7 +152,7 @@ export abstract class Factory<T, V extends string = string> {
         const promise = resolver.resolve(overrides);
 
         const augmented = promise as AugmentedPromise<T>;
-        augmented.as = (label: string): Promise<T> => {
+        augmented.as = (label: RefLabel): Promise<T> => {
             return promise.then((entity) => {
                 this._ctx.setRef(label, entity);
                 return entity;
