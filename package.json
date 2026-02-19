@@ -1,6 +1,6 @@
 {
     "name": "@kage0x3b/typeorm-seeding",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Factory and seeder library for TypeORM with relationship descriptors, variants, and automatic cleanup",
     "type": "module",
     "sideEffects": false,
