@@ -4,6 +4,10 @@ import type { Seeder } from './Seeder.js';
 import type { Constructable } from './types/Constructable.js';
 import type { SeedingUserContext } from './types/SeedingUserContext.js';
 
+/**
+ * Central context that manages factory instances, sequence counters, labeled refs,
+ * and entity lifecycle. Create one via {@link createSeedingContext}.
+ */
 export class SeedingContext {
     private readonly _factoryCache: Map<Constructable<Factory<any>>, Factory<any>>;
     private readonly _sequenceCounters: Map<Constructable<Factory<any>>, number>;
@@ -13,6 +17,10 @@ export class SeedingContext {
     private readonly _dataSource: DataSource;
     private readonly _entityManager: EntityManager;
 
+    /**
+     * User-extensible storage object. Add custom properties via module augmentation
+     * of {@link SeedingUserContext}.
+     */
     public readonly store: SeedingUserContext;
 
     constructor(
@@ -36,6 +44,12 @@ export class SeedingContext {
         this._entityManager = options?.entityManager ?? dataSource.manager;
     }
 
+    /**
+     * Get or create a cached factory instance for the given factory class.
+     *
+     * @param FactoryClass - The factory class to instantiate.
+     * @returns The singleton factory instance bound to this context.
+     */
     public getFactory<F extends Factory<any>>(FactoryClass: Constructable<F>): F {
         let factory = this._factoryCache.get(FactoryClass as Constructable<Factory<any>>);
         if (!factory) {
@@ -49,6 +63,12 @@ export class SeedingContext {
         return factory as F;
     }
 
+    /**
+     * Get the next sequence number for a factory class (starts at 1, increments per call).
+     *
+     * @param FactoryClass - The factory class to track the sequence for.
+     * @returns The next sequence number.
+     */
     public nextSequence<F extends Factory<any>>(FactoryClass: Constructable<F>): number {
         const current = this._sequenceCounters.get(FactoryClass) ?? 0;
         const next = current + 1;
@@ -56,12 +76,23 @@ export class SeedingContext {
         return next;
     }
 
+    /**
+     * Generate a temporary negative ID for entities that haven't been persisted yet.
+     * @returns A unique negative integer.
+     */
     public nextTempId(): number {
         const id = this._tempIdCounter;
         this._tempIdCounter--;
         return id;
     }
 
+    /**
+     * Store a labeled reference to an entity.
+     *
+     * @param label - A unique string identifier.
+     * @param entity - The entity to store.
+     * @throws If the label is already registered.
+     */
     public setRef(label: string, entity: unknown): void {
         if (this._refStore.has(label)) {
             throw new Error(`Ref label "${label}" is already registered. Use ctx.clearRefs() to reset labels.`);
@@ -69,6 +100,14 @@ export class SeedingContext {
         this._refStore.set(label, entity);
     }
 
+    /**
+     * Retrieve a previously labeled entity.
+     *
+     * @typeParam T - The expected entity type.
+     * @param label - The label assigned via {@link Factory.buildOne | .as(label)} or {@link setRef}.
+     * @returns The stored entity, cast to `T`.
+     * @throws If the label has not been registered.
+     */
     public ref<T = unknown>(label: string): T {
         if (!this._refStore.has(label)) {
             throw new Error(
@@ -78,26 +117,43 @@ export class SeedingContext {
         return this._refStore.get(label) as T;
     }
 
+    /** Clear all labeled entity references. */
     public clearRefs(): void {
         this._refStore.clear();
     }
 
+    /** Reset all factory sequence counters to zero. */
     public resetSequences(): void {
         this._sequenceCounters.clear();
     }
 
+    /**
+     * Record an entity creation for later {@link cleanup}.
+     *
+     * @param model - The entity class constructor.
+     * @param entity - The created entity instance.
+     */
     public logCreation(model: Constructable<any>, entity: any): void {
         this._creationLog.push({ model, entity });
     }
 
+    /**
+     * Get the active entity manager. Returns the transaction-scoped manager
+     * when inside a {@link withTransaction} child context.
+     */
     public getEntityManager(): EntityManager {
         return this._entityManager;
     }
 
+    /** Get the underlying TypeORM DataSource. */
     public getDataSource(): DataSource {
         return this._dataSource;
     }
 
+    /**
+     * Reset sequence counters, clear refs, and clear the creation log.
+     * Does **not** delete any persisted entities from the database — use {@link cleanup} for that.
+     */
     public reset(): void {
         this.resetSequences();
         this.clearRefs();
@@ -105,6 +161,10 @@ export class SeedingContext {
         this._tempIdCounter = -1;
     }
 
+    /**
+     * Delete all persisted entities in reverse creation order, then clear the creation log.
+     * Useful for test teardown.
+     */
     public async cleanup(): Promise<void> {
         const em = this._entityManager;
         for (let i = this._creationLog.length - 1; i >= 0; i--) {
@@ -114,6 +174,13 @@ export class SeedingContext {
         this._creationLog.length = 0;
     }
 
+    /**
+     * Create a child context that uses the given entity manager for persistence
+     * while sharing factory cache, sequences, refs, and creation log with this context.
+     *
+     * @param em - A transaction-scoped EntityManager.
+     * @returns A new {@link SeedingContext} bound to the given entity manager.
+     */
     public withTransaction(em: EntityManager): SeedingContext {
         return new SeedingContext(this._dataSource, {
             factoryCache: this._factoryCache,
@@ -125,6 +192,11 @@ export class SeedingContext {
         });
     }
 
+    /**
+     * Run an ordered list of seeders within this context.
+     *
+     * @param seeders - Seeder classes to instantiate and execute in order.
+     */
     public async runSeeders(seeders: Constructable<Seeder>[]): Promise<void> {
         for (const SeederClass of seeders) {
             const seeder = new SeederClass();
@@ -134,6 +206,12 @@ export class SeedingContext {
     }
 }
 
+/**
+ * Create a new {@link SeedingContext} from a TypeORM DataSource.
+ *
+ * @param dataSource - An initialized TypeORM DataSource.
+ * @returns A fresh seeding context ready for use.
+ */
 export function createSeedingContext(dataSource: DataSource): SeedingContext {
     return new SeedingContext(dataSource);
 }
