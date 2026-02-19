@@ -8,11 +8,7 @@ export default defineConfig({
         setupFiles: ['./test/util/setup.ts'],
         coverage: {
             provider: 'v8',
-            exclude: [
-                'src/index.ts',
-                'src/*/index.ts',
-                'test/**'
-            ]
+            exclude: ['src/index.ts', 'src/*/index.ts', 'test/**']
         }
     }
 });
