@@ -119,6 +119,17 @@ describe('Factory variants', () => {
     });
 });
 
+describe('Descriptors in overrides', () => {
+    test('accepts sequence descriptor in overrides', async () => {
+        const users = await ctx.getFactory(UserFactory).build(3, {
+            email: sequence((n) => `batch-${n}@test.com`)
+        });
+        expect(users[0].email).toBe('batch-1@test.com');
+        expect(users[1].email).toBe('batch-2@test.com');
+        expect(users[2].email).toBe('batch-3@test.com');
+    });
+});
+
 describe('Sequence descriptor', () => {
     test('increments per entity', async () => {
         const users = await ctx.getFactory(UserFactory).build(3);

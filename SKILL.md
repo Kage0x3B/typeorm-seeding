@@ -155,6 +155,28 @@ await userFactory.variant('admin', 'inactive').persistOne();  // combine variant
 
 Variants can contain any descriptor. Throws if variant name doesn't exist.
 
+### Descriptors in overrides
+
+Overrides accept descriptors, not just plain values. The type is `FactoryOverrides<T>`.
+
+```typescript
+// sequence in override — unique email per entity
+const users = await userFactory.build(5, {
+    email: sequence((n) => `batch-${n}@test.com`),
+});
+
+// belongsTo in override — create a specific parent
+const pet = await petFactory.persistOne({
+    owner: belongsTo(UserFactory, { role: 'admin' }),
+});
+
+// ref in override — reference a labeled entity
+await userFactory.persistOne().as('manager');
+const report = await reportFactory.buildOne({
+    assignedTo: ref('manager'),
+});
+```
+
 Variant in relationship descriptors:
 
 ```typescript
@@ -255,6 +277,7 @@ const user = await txCtx.getFactory(UserFactory).variant('withPets').persistOne(
 ## Common Pitfalls
 
 - **No constructor args**: Entities must work with `new Entity()` + `Object.assign`. No required constructor parameters.
+- **Overrides accept descriptors**: Override parameters (`FactoryOverrides<T>`) accept plain values, `null`, or any descriptor (`belongsTo`, `hasMany`, `hasOne`, `sequence`, `ref`).
 - **Overrides replace descriptors**: Passing `{ owner: existingUser }` replaces the entire `belongsTo` descriptor. The factory won't create a new parent.
 - **Separate parents per belongsTo**: Each entity gets its own parent by default. To share a parent, pass it explicitly as an override.
 - **Sequence scoping**: Sequences are scoped per factory class, not per variant. `UserFactory` and `UserFactory.variant('admin')` share the same counter.

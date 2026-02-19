@@ -202,7 +202,19 @@ Multiple variants can be combined — they are merged in order.
 | `persistOne(overrides?)` | Yes | `Promise<T>` |
 | `persist(count, overrides?)` | Yes | `Promise<T[]>` |
 
-Built entities receive temporary negative IDs so relationships can be wired up without a database round-trip. Overrides replace descriptors entirely — pass a plain value or an existing entity to skip auto-creation.
+Built entities receive temporary negative IDs so relationships can be wired up without a database round-trip. Overrides accept plain values, `null`, or descriptors — pass a plain value or an existing entity to skip auto-creation, or use a descriptor for dynamic generation:
+
+```typescript
+// Use sequence() in an override for unique values per entity
+const users = await userFactory.build(5, {
+    email: sequence((n) => `batch-${n}@test.com`),
+});
+
+// Use belongsTo() in an override to auto-create a related entity
+const pet = await petFactory.persistOne({
+    owner: belongsTo(UserFactory, { role: 'admin' }),
+});
+```
 
 ## Seeding Context
 

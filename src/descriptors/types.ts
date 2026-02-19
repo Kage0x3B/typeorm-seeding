@@ -1,5 +1,5 @@
 import type { Constructable } from '../types/Constructable.js';
-import type { EntityData } from '../types/EntityData.js';
+import type { FactoryOverrides } from '../types/FactoryOverrides.js';
 import type { Factory } from '../Factory.js';
 
 /** Symbol used to tag descriptor objects for runtime identification. */
@@ -18,7 +18,7 @@ export interface BaseDescriptor {
 export interface BelongsToDescriptor<V = any> extends BaseDescriptor {
     kind: 'belongsTo';
     factoryRef: Constructable<Factory<V, any>>;
-    overridesOrEntity?: EntityData<any> | object;
+    overridesOrEntity?: FactoryOverrides<any> | object;
     variants?: string[];
 }
 
@@ -30,7 +30,7 @@ export interface HasManyDescriptor<V = any> extends BaseDescriptor {
     kind: 'hasMany';
     factoryRef: Constructable<Factory<V, any>>;
     count: number;
-    overrides?: EntityData<any>;
+    overrides?: FactoryOverrides<any>;
     variants?: string[];
 }
 
@@ -41,7 +41,7 @@ export interface HasManyDescriptor<V = any> extends BaseDescriptor {
 export interface HasOneDescriptor<V = any> extends BaseDescriptor {
     kind: 'hasOne';
     factoryRef: Constructable<Factory<V, any>>;
-    overrides?: EntityData<any>;
+    overrides?: FactoryOverrides<any>;
     variants?: string[];
 }
 

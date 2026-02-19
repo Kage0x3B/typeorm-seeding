@@ -15,6 +15,7 @@ export type {
     Constructable,
     EntityData,
     EntityOf,
+    FactoryOverrides,
     FactorySchema,
     SeedingUserContext,
     VariantName

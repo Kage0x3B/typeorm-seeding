@@ -1,6 +1,6 @@
 import { faker, type Faker } from '@faker-js/faker';
 import type { Constructable } from './types/Constructable.js';
-import type { EntityData } from './types/EntityData.js';
+import type { FactoryOverrides } from './types/FactoryOverrides.js';
 import type { FactorySchema } from './types/FactorySchema.js';
 import type { SeedingContext } from './SeedingContext.js';
 import { SchemaResolver } from './resolver/SchemaResolver.js';
@@ -108,7 +108,7 @@ export abstract class Factory<T, V extends string = string> {
      * @param overrides - Property overrides applied after the schema and variants.
      * @returns An augmented promise resolving to the built entity.
      */
-    public buildOne(overrides?: EntityData<T>): AugmentedPromise<T> {
+    public buildOne(overrides?: FactoryOverrides<T>): AugmentedPromise<T> {
         return this._resolveOne(overrides, false);
     }
 
@@ -119,7 +119,7 @@ export abstract class Factory<T, V extends string = string> {
      * @param overrides - Property overrides applied to each entity.
      * @returns A promise resolving to an array of built entities.
      */
-    public build(count: number, overrides?: EntityData<T>): Promise<T[]> {
+    public build(count: number, overrides?: FactoryOverrides<T>): Promise<T[]> {
         return Promise.all(Array.from({ length: count }, () => this._resolveOne(overrides, false)));
     }
 
@@ -129,7 +129,7 @@ export abstract class Factory<T, V extends string = string> {
      * @param overrides - Property overrides applied after the schema and variants.
      * @returns An augmented promise resolving to the persisted entity.
      */
-    public persistOne(overrides?: EntityData<T>): AugmentedPromise<T> {
+    public persistOne(overrides?: FactoryOverrides<T>): AugmentedPromise<T> {
         return this._resolveOne(overrides, true);
     }
 
@@ -140,11 +140,11 @@ export abstract class Factory<T, V extends string = string> {
      * @param overrides - Property overrides applied to each entity.
      * @returns A promise resolving to an array of persisted entities.
      */
-    public persist(count: number, overrides?: EntityData<T>): Promise<T[]> {
+    public persist(count: number, overrides?: FactoryOverrides<T>): Promise<T[]> {
         return Promise.all(Array.from({ length: count }, () => this._resolveOne(overrides, true)));
     }
 
-    private _resolveOne(overrides: EntityData<T> | undefined, persist: boolean): AugmentedPromise<T> {
+    private _resolveOne(overrides: FactoryOverrides<T> | undefined, persist: boolean): AugmentedPromise<T> {
         const resolver = new SchemaResolver<T>(this, this._ctx, faker, persist);
         const promise = resolver.resolve(overrides);
 

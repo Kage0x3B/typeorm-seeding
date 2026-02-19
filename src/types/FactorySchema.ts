@@ -7,7 +7,7 @@ import type {
     SequenceDescriptor
 } from '../descriptors/types.js';
 
-type FieldDescriptor<V> =
+export type FieldDescriptor<V> =
     | SequenceDescriptor<V>
     | RefDescriptor<V>
     | BelongsToDescriptor<NonNullable<V>>

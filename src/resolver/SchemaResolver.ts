@@ -3,7 +3,7 @@ import { EntityMetadataNotFoundError } from 'typeorm';
 import type { Factory } from '../Factory.js';
 import type { SeedingContext } from '../SeedingContext.js';
 import type { Constructable } from '../types/Constructable.js';
-import type { EntityData } from '../types/EntityData.js';
+import type { FactoryOverrides } from '../types/FactoryOverrides.js';
 import {
     isDescriptor,
     type BelongsToDescriptor,
@@ -19,7 +19,7 @@ export class SchemaResolver<T> {
         private readonly _persist: boolean
     ) {}
 
-    public async resolve(overrides?: EntityData<T>): Promise<T> {
+    public async resolve(overrides?: FactoryOverrides<T>): Promise<T> {
         // Phase 1: Call define(faker)
         const rawSchema = this._factory.define(this._faker);
 
@@ -92,9 +92,9 @@ export class SchemaResolver<T> {
                     parent = descriptor.overridesOrEntity;
                 } else {
                     if (this._persist) {
-                        parent = await parentFactory.persistOne(descriptor.overridesOrEntity as EntityData<any>);
+                        parent = await parentFactory.persistOne(descriptor.overridesOrEntity as FactoryOverrides<any>);
                     } else {
-                        parent = await parentFactory.buildOne(descriptor.overridesOrEntity as EntityData<any>);
+                        parent = await parentFactory.buildOne(descriptor.overridesOrEntity as FactoryOverrides<any>);
                     }
                 }
             } else {

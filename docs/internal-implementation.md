@@ -31,7 +31,7 @@ All relationship and value descriptors carry a generic type parameter `V` that e
 interface BelongsToDescriptor<V = any> extends BaseDescriptor {
     kind: 'belongsTo';
     factoryRef: Constructable<Factory<V, any>>;
-    overridesOrEntity?: EntityData<any> | object;
+    overridesOrEntity?: FactoryOverrides<any> | object;
     variants?: string[];
 }
 
@@ -39,14 +39,14 @@ interface HasManyDescriptor<V = any> extends BaseDescriptor {
     kind: 'hasMany';
     factoryRef: Constructable<Factory<V, any>>;
     count: number;
-    overrides?: EntityData<any>;
+    overrides?: FactoryOverrides<any>;
     variants?: string[];
 }
 
 interface HasOneDescriptor<V = any> extends BaseDescriptor {
     kind: 'hasOne';
     factoryRef: Constructable<Factory<V, any>>;
-    overrides?: EntityData<any>;
+    overrides?: FactoryOverrides<any>;
     variants?: string[];
 }
 
@@ -419,6 +419,7 @@ src/
         index.ts                # Re-exports
     types/
         FactorySchema.ts        # Type for define() return value (per-key FieldDescriptor<V>)
+        FactoryOverrides.ts     # Override type for build/persist (values, null, or descriptors)
         FactoryUtilTypes.ts     # EntityOf<F>, VariantName<F>
         DataPropertyNames.ts    # DataPropertyNames<T, K> — filters function/symbol keys
         EntityData.ts           # Partial entity type (excludes functions/symbols)

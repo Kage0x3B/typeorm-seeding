@@ -157,6 +157,8 @@ const userWithPets = await userFactory.variant('withPets').persistOne();
 
 ### Overrides
 
+Overrides accept plain values, `null`, or descriptors (`belongsTo`, `hasMany`, `hasOne`, `sequence`, `ref`) — the same descriptors available in `define()`. The override type is `FactoryOverrides<T>`.
+
 Plain values in overrides replace descriptors entirely. This applies to both scalar fields and relationships.
 
 ```typescript
@@ -166,6 +168,16 @@ const user = await userFactory.persistOne({ email: 'specific@test.com' });
 // Relationship override: pass an existing entity to skip auto-creation
 const existingOwner = await userFactory.persistOne();
 const pet = await petFactory.persistOne({ owner: existingOwner });
+
+// Descriptor in override: use sequence() to generate unique values per entity
+const users = await userFactory.build(3, {
+    email: sequence((n) => `batch-${n}@test.com`),
+});
+
+// Descriptor in override: use belongsTo() to auto-create a related entity
+const pet = await petFactory.persistOne({
+    owner: belongsTo(UserFactory, { role: 'admin' }),
+});
 ```
 
 ---
@@ -261,6 +273,18 @@ If the label has not been registered when the descriptor is resolved, an error i
 ---
 
 ## Type Helpers
+
+### `FactoryOverrides<T>`
+
+Override type for `buildOne`, `build`, `persistOne`, and `persist`. Each property can be a plain value, `null`, or a type-compatible descriptor. This is a superset of both `FactorySchema<T>` (values + descriptors) and `EntityData<T>` (values + `null`).
+
+```typescript
+// FactoryOverrides<T> allows all of:
+{ email: 'literal@test.com' }               // plain value
+{ email: null }                              // null
+{ email: sequence((n) => `u${n}@test.com`) } // descriptor
+{ owner: belongsTo(UserFactory) }            // relationship descriptor
+```
 
 ### `FactorySchema<T>`
 
