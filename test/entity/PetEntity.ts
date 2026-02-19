@@ -1,13 +1,5 @@
-import {
-    BaseEntity,
-    Column,
-    DeleteDateColumn,
-    Entity,
-    ManyToOne,
-    PrimaryColumn,
-    PrimaryGeneratedColumn
-} from 'typeorm';
-import { UserEntity } from './UserEntity';
+import { Column, DeleteDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { UserEntity } from './UserEntity.js';
 
 export enum AnimalType {
     BEAR = 'bear',
@@ -18,16 +10,14 @@ export enum AnimalType {
 }
 
 @Entity()
-export class PetEntity extends BaseEntity {
+export class PetEntity {
     @PrimaryGeneratedColumn()
     public id!: number;
 
     @Column()
     public name!: string;
 
-    @Column('simple-enum', {
-        enum: AnimalType
-    })
+    @Column('simple-enum', { enum: AnimalType })
     public type!: AnimalType;
 
     @Column()
@@ -38,10 +28,4 @@ export class PetEntity extends BaseEntity {
 
     @DeleteDateColumn()
     public deletedAt?: Date;
-
-    constructor(data: Partial<PetEntity> = {}) {
-        super();
-
-        Object.assign(this, data);
-    }
 }

@@ -1,21 +1,36 @@
-import { Factory } from '../../src/Factory';
-import { UserEntity, UserRole } from '../entity/UserEntity';
-import { EntityData } from '../../src/util/EntityData';
-import { Faker } from '@faker-js/faker';
+import { Factory, sequence, hasMany, hasOne, type Faker, type FactorySchema } from '../../src/index.js';
+import { UserEntity, UserRole } from '../entity/UserEntity.js';
+import { PetFactory } from './PetFactory.js';
+import { ProfileFactory } from './ProfileFactory.js';
 
-export class UserFactory extends Factory<UserEntity> {
-    model = UserEntity;
+export class UserFactory extends Factory<UserEntity, 'admin' | 'withPets' | 'withProfile' | 'withEmail'> {
+    readonly model = UserEntity;
 
-    protected definition(faker: Faker): EntityData<UserEntity> {
-        const firstName = faker.name.firstName();
-        const lastName = faker.name.lastName();
-
+    define(faker: Faker): FactorySchema<UserEntity> {
         return {
-            email: faker.internet.email(firstName, lastName),
-            firstName,
-            lastName,
-            address: faker.address.streetAddress(true),
-            role: faker.helpers.objectValue(UserRole)
+            email: sequence((n) => `user${n}@test.com`),
+            firstName: faker.person.firstName(),
+            lastName: faker.person.lastName(),
+            address: faker.location.streetAddress(true),
+            role: faker.helpers.arrayElement([UserRole.ADMIN, UserRole.USER, UserRole.GUEST])
+        };
+    }
+
+    variants() {
+        return {
+            admin: {
+                role: UserRole.ADMIN,
+                email: sequence((n) => `admin${n}@test.com`)
+            },
+            withPets: {
+                pets: hasMany(PetFactory, 3)
+            },
+            withProfile: {
+                profile: hasOne(ProfileFactory)
+            },
+            withEmail: {
+                email: 'specific@test.com'
+            }
         };
     }
 }

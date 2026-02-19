@@ -1,56 +1,78 @@
-import { Constructable } from './util';
-import { faker, Faker } from '@faker-js/faker';
-import { EntityData } from './util/EntityData';
-import { EntityManager, getConnection, SaveOptions } from 'typeorm';
+import { faker, type Faker } from '@faker-js/faker';
+import type { Constructable } from './types/Constructable.js';
+import type { EntityData } from './types/EntityData.js';
+import type { FactorySchema } from './types/FactorySchema.js';
+import type { SeedingContext } from './SeedingContext.js';
+import { SchemaResolver } from './resolver/SchemaResolver.js';
 
-export abstract class Factory<T> {
-    abstract readonly model: Constructable<T>;
-    private readonly em: EntityManager;
+export type AugmentedPromise<T> = Promise<T> & {
+    as(label: string): Promise<T>;
+};
 
-    constructor(em?: EntityManager) {
-        this.em = em ?? getConnection().createEntityManager();
+export abstract class Factory<T, V extends string = string> {
+    public abstract readonly model: Constructable<T>;
+
+    /** @internal — injected by SeedingContext */
+    private _ctx!: SeedingContext;
+
+    /** @internal — set by variant() */
+    private _activeVariants: V[] = [];
+
+    public get ctx(): SeedingContext {
+        return this._ctx;
     }
 
-    protected abstract definition(faker: Faker): T | EntityData<T>;
-
-    public makeOne(overrideParameters: EntityData<T> = {}): T {
-        const entityDefinition = this.definition(faker);
-        let entity: T;
-        let entityAttributes: EntityData<T> = {};
-
-        if (entityDefinition instanceof this.model) {
-            entity = entityDefinition;
-
-            entityAttributes = overrideParameters;
-        } else {
-            // Constructor can be empty or accept attributes as the first argument to calculate some derived attributes.
-            // The attributes still get overwritten below by Object.assign()
-            entity = new this.model(entityAttributes);
-
-            entityAttributes = {
-                ...this.definition(faker),
-                ...overrideParameters
-            };
-        }
-
-        Object.assign(entity, entityAttributes);
-
-        return entity;
+    /** @internal */
+    public set _internalCtx(ctx: SeedingContext) {
+        this._ctx = ctx;
     }
 
-    public make(amount: number, overrideParameters?: EntityData<T>): T[] {
-        return Array.from({ length: amount }, () => this.makeOne(overrideParameters));
+    /** @internal */
+    public get _internalActiveVariants(): V[] {
+        return this._activeVariants;
     }
 
-    public createOne(overrideParameters?: EntityData<T>, options?: SaveOptions): Promise<T> {
-        const entity = this.makeOne(overrideParameters);
+    public abstract define(faker: Faker): FactorySchema<T>;
 
-        return this.em.save(entity, options);
+    public variants(): Record<V, Partial<FactorySchema<T>>> {
+        return {} as Record<V, Partial<FactorySchema<T>>>;
     }
 
-    public create(amount: number, overrideParameters?: EntityData<T>, options?: SaveOptions): Promise<T[]> {
-        const entities = this.make(amount, overrideParameters);
+    public variant(...names: V[]): this {
+        const clone = Object.create(Object.getPrototypeOf(this));
+        Object.assign(clone, this);
+        clone._activeVariants = [...this._activeVariants, ...names];
+        return clone;
+    }
 
-        return this.em.save(entities, options);
+    public buildOne(overrides?: EntityData<T>): AugmentedPromise<T> {
+        return this._resolveOne(overrides, false);
+    }
+
+    public build(count: number, overrides?: EntityData<T>): Promise<T[]> {
+        return Promise.all(Array.from({ length: count }, () => this._resolveOne(overrides, false)));
+    }
+
+    public persistOne(overrides?: EntityData<T>): AugmentedPromise<T> {
+        return this._resolveOne(overrides, true);
+    }
+
+    public persist(count: number, overrides?: EntityData<T>): Promise<T[]> {
+        return Promise.all(Array.from({ length: count }, () => this._resolveOne(overrides, true)));
+    }
+
+    private _resolveOne(overrides: EntityData<T> | undefined, persist: boolean): AugmentedPromise<T> {
+        const resolver = new SchemaResolver<T>(this, this._ctx, faker, persist);
+        const promise = resolver.resolve(overrides);
+
+        const augmented = promise as AugmentedPromise<T>;
+        augmented.as = (label: string): Promise<T> => {
+            return promise.then((entity) => {
+                this._ctx.setRef(label, entity);
+                return entity;
+            });
+        };
+
+        return augmented;
     }
 }

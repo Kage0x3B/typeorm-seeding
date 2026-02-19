@@ -3,12 +3,15 @@ tmp/
 temp/
 
 # Build folder
-lib/
+dist/
 
 build/
 .DS_STORE
 logs/
 tools/**/*.js
+
+# JetBrains IDE
+.idea/
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,webstorm
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,webstorm
